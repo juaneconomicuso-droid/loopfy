@@ -1,0 +1,24 @@
+# segredos e dados locais — nunca vão para o repositório
+CHAVE-DE-TESTE.txt
+.env*
+**/.env*
+*.bak
+license.bin
+
+# dependências e builds
+node_modules/
+.next/
+.venv/
+__pycache__/
+*.pyc
+
+# dados e perfil do navegador do Loopfy (sessão da conta do TikTok!)
+desktop/profile/
+desktop/data/
+app/data/
+
+# fora do escopo do Loopfy
+extension/
+IDV/
+.claude/
+**/.claude/

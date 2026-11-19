@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Loopfy Estúdio</title>
+<style>
+  :root { --bg:#030309; --card:#0b0b17; --tile:#12121f; --tile2:#1b1b2f; --line:#22223a; --tx:#f4f4fa; --tx2:#9a9ab5; --vi:#8b5cf6; --cy:#22d3ee; --ok:#34d399; --wa:#fbbf24; --er:#ff5c7a; --grad:linear-gradient(90deg,#7c3aed,#06b6d4); }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--tx); font:13px/1.4 "Segoe UI", system-ui, sans-serif; }
+  body { display:flex; flex-direction:column; background: radial-gradient(55% 35% at 12% 0%, rgba(139,92,246,.18), transparent 70%), radial-gradient(40% 30% at 96% 0%, rgba(34,211,238,.10), transparent 70%), var(--bg); }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  input[type=text], select { background:var(--tile); border:1px solid var(--line); color:var(--tx); border-radius:8px; padding:8px 10px; font:inherit; }
+  input[type=text]:focus, select:focus { outline:0; border-color:var(--vi); }
+  b { font-weight:600; }
+
+  /* barra de título */
+  .titlebar { height:56px; flex:none; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:0 14px; border-bottom:1px solid var(--line); }
+  .tb-esq { display:flex; align-items:center; gap:12px; } .tb-esq img { height:34px; mix-blend-mode:screen; }
+  .tb-esq strong { font-size:15px; } .tb-sub { color:var(--tx2); font-size:12px; }
+  .tb-dir { display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+  .pill { display:flex; align-items:center; gap:7px; padding:5px 12px; border-radius:99px; background:var(--tile); font-size:12px; color:var(--tx2); border:1px solid transparent; }
+  .pill i { width:8px; height:8px; border-radius:50%; background:var(--er); }
+  .pill.on { color:var(--ok); } .pill.on i { background:var(--ok); } .pill.warn i { background:var(--wa); } .pill.warn { color:var(--wa); }
+  .ic { width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:var(--tile); display:grid; place-items:center; }
+  .ic:hover, .tool:hover { background:var(--tile2); }
+  svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* três colunas */
+  .palco { flex:1; min-height:0; display:grid; grid-template-columns:318px minmax(0,1fr) 308px; gap:10px; padding:10px; }
+  .col { min-height:0; display:flex; flex-direction:column; gap:10px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#333 transparent; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .card h2 { margin:0; font-size:14px; }
+  .dica { color:var(--tx2); font-size:12px; margin:6px 0 0; }
+  .vazio { color:var(--tx2); font-size:12px; padding:10px 2px; }
+
+  /* sacolinha */
+  .sac-topo { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .btn { background:var(--grad); border:0; color:#fff; border-radius:9px; padding:8px 14px; font-weight:600; }
+  .btn.sm { padding:6px 11px; font-size:12px; }
+  .btn.ghost { background:var(--tile); border:1px solid var(--line); color:var(--tx); font-weight:500; }
+  .btn.dan { background:transparent; border:1px solid var(--er); color:var(--er); }
+  .sac-sub { display:flex; justify-content:space-between; color:var(--tx2); font-size:12px; margin:8px 0 6px; }
+  #prodFilter { width:100%; margin-bottom:8px; }
+  .grade { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:300px; overflow-y:auto; padding-right:2px; }
+  .prod { position:relative; display:grid; grid-template-columns:38px minmax(0,1fr); gap:8px; align-items:center; text-align:left; border:2px solid transparent; border-radius:10px; background:var(--tile); padding:7px; min-width:0; }
+  .prod:hover { background:var(--tile2); }
+  .prod.fix { border-color:var(--cy); }
+  .prod img, .prod .ph { width:38px; height:38px; border-radius:7px; object-fit:cover; background:#1d1d33; }
+  .prod .t { font-size:11.5px; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .prod .p { color:var(--cy); font-size:11.5px; font-weight:600; }
+  .prod .chk { position:absolute; top:4px; right:4px; accent-color:#8b5cf6; }
+  .prod .tag { font-size:9.5px; color:var(--tx2); }
+  .prod .tag.in { color:var(--ok); } .prod .tag.fx { color:var(--cy); font-weight:700; }
+  .auto { margin-top:10px; padding-top:10px; border-top:1px solid var(--line); display:grid; gap:8px; }
+  .auto .l { display:flex; align-items:center; gap:8px; flex-wrap:wrap; color:var(--tx2); font-size:12px; }
+  .sw { display:flex; align-items:center; gap:9px; color:var(--tx); cursor:pointer; }
+  .sw input { appearance:none; width:34px; height:19px; border-radius:99px; background:#2a2a44; position:relative; cursor:pointer; transition:.15s; flex:none; }
+  .sw input::after { content:""; position:absolute; top:3px; left:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
+  .sw input:checked { background:var(--grad); } .sw input:checked::after { transform:translateX(15px); }
+  .num { width:62px; text-align:center; padding:6px; }
+
+  /* ferramentas */
+  .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+  .tile { background:var(--tile); border:1px solid transparent; border-radius:10px; padding:11px 4px 9px; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11.5px; }
+  .tile:hover:not(:disabled) { background:var(--tile2); border-color:var(--line); }
+  .tile svg { width:22px; height:22px; color:var(--cy); }
+  .tile small { color:var(--tx2); font-size:9.5px; }
+
+  /* centro */
+  .centro { min-height:0; display:flex; flex-direction:column; gap:8px; }
+  .barra-cena { display:flex; align-items:center; gap:8px; }
+  .cena { display:flex; align-items:center; gap:8px; background:var(--tile); border:1px solid var(--line); border-radius:9px; padding:7px 12px; font-size:12.5px; }
+  .cena b { color:var(--cy); }
+  .canvas-area { flex:1; min-height:0; display:grid; place-items:center; background:#05050c; border:1px solid var(--line); border-radius:14px; padding:10px; }
+  .canvas { position:relative; width:100%; max-height:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; display:grid; place-items:center; }
+  .canvas img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  .canvas .msg { color:var(--tx2); text-align:center; padding:0 24px; }
+  .selo { position:absolute; top:10px; left:10px; background:var(--er); color:#fff; border-radius:6px; padding:3px 9px; font-size:11px; font-weight:800; display:flex; gap:6px; align-items:center; }
+  .selo .pulso { width:7px; height:7px; border-radius:50%; background:#fff; animation:p 1.2s infinite; } @keyframes p { 50% { opacity:.25; } }
+  .selo-clip { position:absolute; top:10px; right:10px; background:rgba(0,0,0,.65); border:1px solid var(--cy); color:var(--cy); border-radius:6px; padding:3px 9px; font-size:11px; }
+  .toolbar { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:9px 12px; }
+  .tool { width:38px; height:38px; border-radius:10px; border:1px solid var(--line); background:var(--tile); display:grid; place-items:center; position:relative; }
+  .tool.on { border-color:var(--er); color:var(--er); }
+  .sep { width:1px; height:26px; background:var(--line); margin:0 4px; }
+  .sp { flex:1; }
+  .btn-live { background:var(--grad); border:0; color:#fff; border-radius:11px; padding:11px 26px; font-size:14px; font-weight:700; }
+  .btn-live.stop { background:transparent; border:1px solid var(--er); color:var(--er); }
+  .statusline { color:var(--tx2); font-size:11.5px; padding:0 4px; }
+
+  /* direita */
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin-top:10px; font-size:12.5px; }
+  .kv span:nth-child(odd) { color:var(--tx2); }
+  .bigt { font:700 26px Consolas, monospace; color:var(--cy); letter-spacing:.04em; }
+  .col-dir .grow { flex:1; min-height:0; display:flex; flex-direction:column; }
+  #log { list-style:none; margin:8px 0 0; padding:0; flex:1; min-height:80px; overflow-y:auto; display:grid; gap:5px; align-content:start; font:11.5px Consolas, monospace; }
+  #log li { display:flex; gap:8px; background:var(--tile); border-radius:7px; padding:5px 8px; }
+  #log .t { color:var(--cy); flex:none; } #log .ok { color:var(--ok); } #log .warn { color:var(--wa); } #log .err { color:var(--er); }
+  .composer { margin-top:8px; display:flex; gap:6px; } .composer input { flex:1; }
+
+  /* janelas */
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; place-items:center; z-index:20; }
+  .modal.open { display:grid; }
+  .caixa { width:min(560px,92vw); max-height:88vh; overflow-y:auto; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; }
+  .cab { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; } .cab strong { font-size:15px; }
+  .x { background:none; border:0; font-size:20px; color:var(--tx2); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .campo { display:block; margin-top:10px; color:var(--tx2); font-size:12px; } .campo input, .campo select { display:block; width:100%; margin-top:4px; }
+  input[type=range] { width:100%; accent-color:#8b5cf6; }
+  .item { display:flex; align-items:center; gap:8px; background:var(--tile); border-radius:9px; padding:8px 10px; margin-top:7px; } .item span { flex:1; word-break:break-word; }
+  .timerbox { background:var(--tile); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:16px; margin-top:10px; }
+  details { margin-top:14px; } summary { cursor:pointer; color:var(--tx2); }
+  .lic-ok { background:rgba(52,211,153,.1); color:var(--ok); border-radius:9px; padding:9px 12px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<header class="titlebar">
+  <div class="tb-esq"><img src="logo.png" alt="Loopfy" /><strong>Estúdio</strong><span class="tb-sub">Live Commerce Automation</span></div>
+  <div class="pill" id="acctPill"><i></i><span id="acctTxt">conta…</span></div>
+  <div class="tb-dir">
+    <div class="pill" id="licPill"><i></i><span id="licText">licença…</span></div>
+    <button class="ic" id="btnCfg" title="Entradas, conta e licença" aria-label="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+</header>
+
+<main class="palco">
+  <!-- ESQUERDA -->
+  <aside class="col">
+    <section class="card">
+      <div class="sac-topo"><h2>Sacolinha</h2><button class="btn sm" id="btnImport" title="Traz para cá os produtos da sua sacolinha">Importar sacolinha</button></div>
+      <div class="sac-sub"><span id="sacCount">Nenhum item</span><span id="sacSel"></span></div>
+      <input type="text" id="prodFilter" placeholder="Filtrar por nome" style="letter-spacing:0" />
+      <div class="grade" id="grade"><div class="vazio">Clique em "Importar sacolinha" para trazer seus produtos.</div></div>
+      <button class="btn sm" id="btnBag" style="width:100%;margin-top:8px;display:none" title="Coloca na sacola da LIVE os itens marcados que ainda estão fora dela">Colocar marcados na sacola</button>
+      <p class="dica" id="sacDica">Clique no produto para fixá-lo na LIVE (se estiver fora da sacola, o clique coloca na sacola). Marque os que entram na troca automática.</p>
+      <div class="auto">
+        <label class="sw"><input type="checkbox" id="aOn" /> Trocar a sacolinha sozinho</label>
+        <div class="l">a cada <input type="text" id="aSec" class="num" value="45" /> s
+          <select id="aMode"><option value="ordem">em ordem</option><option value="aleatorio">aleatório</option></select></div>
+        <div class="l" id="aInfo">Usa os itens marcados (ou todos, se nenhum estiver marcado).</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Ferramentas</h2>
+      <div class="tiles">
+        <button class="tile" data-open="mTimer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg>Timer</button>
+        <button class="tile" data-open="mVideos"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>Vídeos</button>
+        <button class="tile" data-open="mAudio"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Áudio</button>
+        <button class="tile" data-open="mGuard"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>Proteção<small id="tGuard">desligada</small></button>
+        <button class="tile" data-open="mChat"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-11.9 7.8L3 21l1.7-6.1A8.5 8.5 0 1 1 21 11.5z"/></svg>Comentários<small id="tChat">desligados</small></button>
+        <button class="tile" disabled title="Em breve: depende de ler quem entra na LIVE"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.7 5.7l12.6 12.6"/></svg>Bloqueio<small>em breve</small></button>
+        <button class="tile" disabled title="Em breve: precisa de chave de IA e leitura do chat"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9 16.5h6"/></svg>IA no chat<small>em breve</small></button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- CENTRO -->
+  <section class="centro">
+    <div class="barra-cena">
+      <div class="cena">Fonte de vídeo: <b id="cenaTxt">Câmera ao vivo</b></div>
+      <div class="sp"></div>
+      <button class="btn ghost sm" id="btnPrep" title="Abre e seleciona as fontes, mas para na prévia">Só preparar (sem iniciar)</button>
+    </div>
+    <div class="canvas-area">
+      <div class="canvas" id="canvas">
+        <img id="retorno" alt="Retorno da LIVE" hidden />
+        <div class="msg" id="canvasMsg">Clique em <b>Iniciar LIVE</b>: o Loopfy abre o navegador, seleciona as fontes e inicia a transmissão.</div>
+        <span class="selo" id="selo" hidden><span class="pulso"></span>AO VIVO</span>
+        <span class="selo-clip" id="seloClip" hidden></span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="tool" data-open="mVideos" title="Vídeos da marca" aria-label="Vídeos"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></button>
+      <button class="tool" data-open="mTimer" title="Timer de encerramento" aria-label="Timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg></button>
+      <button class="tool" data-open="mCfg" title="Entradas: câmera e microfone" aria-label="Entradas"><svg viewBox="0 0 24 24"><path d="M4 7h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><path d="M16 11l6-3v8l-6-3"/></svg></button>
+      <span class="sep"></span>
+      <button class="tool" data-open="mAudio" title="Áudio" aria-label="Áudio"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+      <button class="tool" id="btnMute" title="Silenciar microfone" aria-label="Silenciar microfone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <div class="sp"></div>
+      <button class="btn-live" id="btnLive">Iniciar LIVE</button>
+    </div>
+    <div class="statusline" id="status">Sessão parada.</div>
+  </section>
+
+  <!-- DIREITA -->
+  <aside class="col col-dir">
+    <section class="card">
+      <h2>Sessão da LIVE</h2>
+      <div class="kv">
+        <span>Sala</span><span id="kSala">—</span>
+        <span>Fixado</span><span><span id="kPin">—</span> <button class="btn ghost sm" id="btnUnpin" style="padding:2px 8px;margin-left:6px" title="Desafixar o produto">Desafixar</button></span>
+        <span>Vídeo da marca</span><span id="kClip">—</span>
+        <span>Troca automática</span><span id="kAuto">Desligada</span>
+      </div>
+      <div style="margin-top:12px"><span style="color:var(--tx2);font-size:12px">Encerramento automático</span><div class="bigt" id="kTimer">--:--:--</div></div>
+    </section>
+    <section class="card" id="alertaGuard" style="display:none;border-color:var(--er)">
+      <h2 style="color:var(--er)">⚠ Restrição detectada</h2>
+      <p class="dica" id="alertaTxt"></p>
+      <div class="row"><button class="btn dan sm" id="btnFalso">Falso alarme: cancelar</button></div>
+    </section>
+    <section class="card grow">
+      <h2>Registro da LIVE</h2>
+      <ul id="log"></ul>
+      <div class="composer"><input type="text" disabled placeholder="Comentários automáticos: em breve" /></div>
+    </section>
+  </aside>
+</main>
+
+<!-- ===== janelas ===== -->
+<div class="modal" id="mVideos"><div class="caixa">
+  <div class="cab"><strong>Vídeos da marca</strong><button class="x" data-close>×</button></div>
+  <p class="dica">Adicione os vídeos (mp4, mov ou webm) e organize a ordem com as setas. Com a LIVE no ar, <b>Tocar sequência</b> passa os vídeos marcados um depois do outro, uma vez cada, e volta para a sua câmera no fim. A imagem sai pela Loopfy Câmera e o som se junta ao seu microfone, que continua ao vivo. Sem repetição.</p>
+  <div class="row"><button class="btn sm" id="btnClipAdd">Adicionar vídeos</button><button class="btn sm" id="btnSeq" disabled>Tocar sequência</button><button class="btn ghost sm" id="btnClipStop" disabled>Parar</button></div>
+  <div class="dica" id="seqInfo"></div>
+  <div id="clips"><div class="vazio">Nenhum vídeo adicionado.</div></div>
+</div></div>
+
+<div class="modal" id="mGuard"><div class="caixa">
+  <div class="cab"><strong>Proteção contra violação</strong><button class="x" data-close>×</button></div>
+  <p class="dica">O Loopfy confere a cada 20 segundos se o TikTok registrou uma restrição nova na sua conta durante a LIVE. Se registrar, espera alguns segundos (para você cancelar um falso alarme) e executa a ação escolhida.</p>
+  <label class="sw" style="margin-top:12px"><input type="checkbox" id="gOn" /> Proteção ligada</label>
+  <label class="campo">Ação<select id="gAction"><option value="end">Encerrar a LIVE</option><option value="pause">Só pausar as automações (fixação, comentários e vídeo)</option></select></label>
+  <label class="campo">Esperar antes de agir (segundos, de 3 a 30)<input type="text" id="gSec" value="10" style="letter-spacing:0" /></label>
+  <p class="dica">Só vale com a LIVE no ar. Restrições que já existiam antes de começar não disparam; só as novas.</p>
+</div></div>
+
+<div class="modal" id="mChat"><div class="caixa">
+  <div class="cab"><strong>Comentários automáticos</strong><button class="x" data-close>×</button></div>
+  <p class="dica">Escreve no chat da LIVE, pela própria tela do Console, as mensagens abaixo (uma por linha, até 100 caracteres cada). O intervalo mínimo é de 30 segundos. Mensagens repetitivas demais podem ser vistas como spam pelo TikTok: varie os textos.</p>
+  <label class="campo">Mensagens (uma por linha)<textarea id="cMsgs" rows="6" style="width:100%;margin-top:4px;background:var(--tile);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit" placeholder="Aproveite o cupom de hoje!&#10;Últimas unidades da oferta."></textarea></label>
+  <div class="row"><span class="dica" style="margin:0">Entre</span><input type="text" id="cMin" class="num" value="45" /><span class="dica" style="margin:0">e</span><input type="text" id="cMax" class="num" value="90" /><span class="dica" style="margin:0">segundos</span>
+    <label class="sw" style="margin-left:8px"><input type="checkbox" id="cRnd" checked /> ordem aleatória</label></div>
+  <label class="sw" style="margin-top:14px"><input type="checkbox" id="cOn" /> Comentários ligados (só com a LIVE preparada)</label>
+</div></div>
+
+<div class="modal" id="mTimer"><div class="caixa">
+  <div class="cab"><strong>Timer de encerramento</strong><button class="x" data-close>×</button></div>
+  <p class="dica">Encerra a LIVE sozinho quando o tempo acabar. Avisa 5 minutos e 1 minuto antes. Fica ativo enquanto o Loopfy estiver aberto.</p>
+  <div class="timerbox"><div class="bigt" id="tLeft">--:--:--</div><div class="dica" id="tState" style="margin:0">Sem timer.</div></div>
+  <div class="row">
+    <button class="btn ghost sm" data-min="60">1h</button><button class="btn ghost sm" data-min="120">2h</button><button class="btn ghost sm" data-min="240">4h</button><button class="btn ghost sm" data-min="360">6h</button><button class="btn ghost sm" data-min="480">8h</button>
+    <input type="text" id="tMin" class="num" placeholder="min" style="letter-spacing:0" />
+  </div>
+  <div class="row"><button class="btn sm" id="tStart">Armar timer</button><button class="btn ghost sm" id="tPause">Pausar</button><button class="btn ghost sm" id="tCancel">Cancelar</button></div>
+</div></div>
+
+<div class="modal" id="mAudio"><div class="caixa">
+  <div class="cab"><strong>Áudio</strong><button class="x" data-close>×</button></div>
+  <p class="dica">O som do vídeo tem caminho e volume próprios e se junta ao microfone só no fim, porque a LIVE aceita uma única fonte de áudio.</p>
+  <label class="campo">Microfone enquanto o vídeo toca: <b id="duckV">25</b>%<input type="range" id="cfgDuck" min="0" max="100" value="25" /></label>
+  <label class="campo">Volume do som do vídeo: <b id="clipV">100</b>%<input type="range" id="cfgClipVol" min="0" max="100" value="100" /></label>
+  <div class="row"><button class="btn ghost sm" id="btnMute2">Silenciar microfone</button></div>
+</div></div>
+
+<div class="modal" id="mCfg"><div class="caixa">
+  <div class="cab"><strong>Entradas, conta e licença</strong><button class="x" data-close>×</button></div>
+  <h2 style="font-size:13px;margin:8px 0 0">Fontes da LIVE</h2>
+  <p class="dica">A base é sempre a sua câmera e o seu microfone reais. O Loopfy as expõe na LIVE como Loopfy Câmera e Loopfy Microfone.</p>
+  <label class="campo">Câmera real (parte do nome)<input type="text" id="cfgCamera" placeholder="vazio = a primeira câmera encontrada" style="letter-spacing:0" /></label>
+  <label class="campo">Microfone real (parte do nome)<input type="text" id="cfgMic" placeholder="vazio = o primeiro microfone" style="letter-spacing:0" /></label>
+  <label class="campo">Fonte de vídeo na LIVE<input type="text" id="cfgVideo" style="letter-spacing:0" /></label>
+  <label class="campo">Fonte de áudio na LIVE<input type="text" id="cfgAudio" style="letter-spacing:0" /></label>
+
+  <h2 style="font-size:13px;margin:18px 0 0">Conta do TikTok</h2>
+  <div class="dica" id="acctInfo">—</div>
+  <div class="row"><button class="btn ghost sm op" id="btnLogin">Entrar na conta</button><button class="btn ghost sm op" id="btnCheck">Verificar acesso à LIVE</button></div>
+
+  <h2 style="font-size:13px;margin:18px 0 0">Licença</h2>
+  <div id="licForm"><div class="row"><input type="text" id="key" placeholder="LPFY-XXXX-XXXX-XXXX-XXXX-XXXX" style="flex:1;letter-spacing:.04em" /><button class="btn sm" id="btnAct">Ativar</button></div></div>
+  <div class="lic-ok" id="licOk" style="display:none">Licença ativa neste computador. Renova sozinha quando há internet.</div>
+  <div class="dica" id="licMsg"></div>
+
+  <details><summary>Avançado: buscar chave de transmissão</summary>
+    <p class="dica">Grava as respostas do TikTok enquanto você navega até a tela de transmitir por software e procura uma chave.</p>
+    <div class="row"><button class="btn ghost sm op" id="btnRec">Iniciar busca</button><button class="btn ghost sm" id="btnStopRec" disabled>Parar</button></div>
+    <div class="dica" id="recStat"></div><div id="cands"></div>
+  </details>
+</div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = () => window.pywebview && window.pywebview.api;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let since = 0, lastBusy = '', busy = '', selected = new Set(), imported = [], lastLive = null, tState = 'idle', muted = false, liveOn = false;
+
+/* ---------- janelas ---------- */
+document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => $(b.dataset.open).classList.add('open'));
+$('btnCfg').onclick = () => $('mCfg').classList.add('open');
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('mousedown', e => { if (e.target === m) m.classList.remove('open'); }));
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.modal').classList.remove('open'));
+
+/* ---------- registro ---------- */
+function addLog(l) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="t">${esc(l.t)}</span><span class="${esc(l.kind)}">${esc(l.text)}</span>`;
+  $('log').appendChild(li); $('log').scrollTop = $('log').scrollHeight;
+}
+async function run(fn) {
+  const r = await fn();
+  if (r && r.ok === false && r.msg) addLog({ t: new Date().toLocaleTimeString('pt-BR'), kind: 'warn', text: r.msg });
+  return r;
+}
+
+/* ---------- licença e conta ---------- */
+async function refreshLicense() {
+  const s = await api().license_state(); const on = !!s.active;
+  $('licPill').className = 'pill ' + (on ? 'on' : ''); $('licText').textContent = on ? 'licença ativa · ' + s.plan : 'sem licença';
+  $('licForm').style.display = on ? 'none' : 'block'; $('licOk').style.display = on ? 'block' : 'none';
+  document.querySelectorAll('.op,#btnLive,#btnPrep,#btnImport').forEach(b => b.dataset.lic = on ? '1' : '0');
+  if (s.error) $('licMsg').textContent = s.error;
+  if (!on) $('mCfg').classList.add('open');
+}
+$('btnAct').onclick = async () => {
+  $('licMsg').textContent = 'Ativando…';
+  const r = await api().activate($('key').value);
+  $('licMsg').textContent = r.ok ? 'Licença ativada.' : (r.msg || 'Não foi possível ativar.'); if (r.ok) $('key').value = '';
+  refreshLicense();
+};
+$('btnLogin').onclick = () => run(() => api().login());
+$('btnCheck').onclick = () => run(() => api().check());
+
+/* ---------- configuração ---------- */
+async function saveCfg() {
+  await api().set_config({ video: $('cfgVideo').value, audio: $('cfgAudio').value, camera: $('cfgCamera').value, mic: $('cfgMic').value });
+}
+['cfgVideo', 'cfgAudio', 'cfgCamera', 'cfgMic'].forEach(id => $(id).addEventListener('change', saveCfg));
+function sendLevels() {
+  $('duckV').textContent = $('cfgDuck').value; $('clipV').textContent = $('cfgClipVol').value;
+  api().set_levels(Number($('cfgDuck').value), Number($('cfgClipVol').value));
+}
+$('cfgDuck').addEventListener('input', () => { $('duckV').textContent = $('cfgDuck').value; });
+$('cfgClipVol').addEventListener('input', () => { $('clipV').textContent = $('cfgClipVol').value; });
+$('cfgDuck').addEventListener('change', sendLevels); $('cfgClipVol').addEventListener('change', sendLevels);
+const toggleMute = () => run(() => api().set_mute(!muted));
+$('btnMute').onclick = toggleMute; $('btnMute2').onclick = toggleMute;
+
+/* ---------- iniciar / encerrar ---------- */
+$('btnLive').onclick = async () => {
+  if (liveOn) { await api().discover_stop(); return; }
+  await saveCfg(); run(() => api().start_live());
+};
+$('btnPrep').onclick = async () => { await saveCfg(); run(() => api().prepare_live(false)); };
+
+/* ---------- sacolinha ---------- */
+function items() {
+  const bag = (lastLive && lastLive.products) || [];
+  const ids = new Set(bag.map(p => p.id));
+  const fromBag = bag.map(p => ({ id: p.id, title: p.title, price: p.price, image: (imported.find(i => i.id === p.id) || {}).image || '', inBag: true }));
+  const rest = imported.filter(p => !ids.has(p.id)).map(p => ({ ...p, inBag: false }));
+  return fromBag.concat(rest);
+}
+function renderSac() {
+  const q = $('prodFilter').value.trim().toLowerCase();
+  const all = items(); const list = all.filter(p => !q || p.title.toLowerCase().includes(q));
+  const pinned = lastLive && lastLive.pinned ? lastLive.pinned.id : null;
+  $('sacCount').textContent = all.length ? `${all.length} itens` : 'Nenhum item';
+  $('sacSel').textContent = all.length ? `${selected.size} marcados` : '';
+  if (!all.length) { $('grade').innerHTML = '<div class="vazio">Clique em "Importar sacolinha" para trazer seus produtos.</div>'; return; }
+  $('grade').innerHTML = list.map(p => `<div class="prod ${pinned === p.id ? 'fix' : ''}" data-pin="${esc(p.id)}" role="button" tabindex="0" title="${esc(p.title)}">
+      <input class="chk" type="checkbox" data-id="${esc(p.id)}" ${selected.has(p.id) ? 'checked' : ''} title="Incluir na troca automática" />
+      ${p.image ? `<img src="${esc(p.image)}" alt="" />` : '<div class="ph"></div>'}
+      <div><div class="t">${esc(p.title)}</div><div class="p">${esc(p.price || '')}</div><div class="tag ${pinned === p.id ? 'fx' : p.inBag ? 'in' : ''}">${pinned === p.id ? '● fixado' : p.inBag ? 'na sacola' : 'fora da sacola'}</div></div></div>`).join('') || '<div class="vazio">Nenhum item com esse nome.</div>';
+  $('grade').querySelectorAll('.chk').forEach(c => { c.onclick = e => e.stopPropagation(); c.onchange = () => { c.checked ? selected.add(c.dataset.id) : selected.delete(c.dataset.id); $('sacSel').textContent = `${selected.size} marcados`; api().set_config({ selected: [...selected] }); if ($('aOn').checked) sendAuto(); }; });
+  const out = all.filter(p => !p.inBag && selected.has(p.id));
+  $('btnBag').style.display = out.length ? 'block' : 'none';
+  $('btnBag').textContent = `Colocar ${out.length} marcado${out.length > 1 ? 's' : ''} na sacola`;
+  $('btnBag').onclick = () => run(() => api().live_bag_add(out.map(p => p.id)));
+  const byId = Object.fromEntries(all.map(p => [p.id, p]));
+  $('grade').querySelectorAll('[data-pin]').forEach(c => c.onclick = () => run(() => (byId[c.dataset.pin] && !byId[c.dataset.pin].inBag) ? api().live_bag_add([c.dataset.pin]) : api().live_pin(c.dataset.pin)));
+}
+$('prodFilter').addEventListener('input', renderSac);
+$('btnImport').onclick = () => run(() => (liveOn ? api().live_import() : api().products_sync()));
+async function loadProds() { const cfg = await api().get_config(); selected = new Set(cfg.selected || []); imported = await api().products_list(); renderSac(); }
+function sendAuto() { run(() => api().live_auto($('aOn').checked, Number($('aSec').value) || 45, $('aMode').value, [...selected])); }
+['aOn', 'aSec', 'aMode'].forEach(id => $(id).addEventListener('change', sendAuto));
+
+/* ---------- vídeos da marca ---------- */
+let clipList = [], seqSel = new Set();
+function renderClips(list) {
+  clipList = list || [];
+  const box = $('clips');
+  if (!clipList.length) { box.innerHTML = '<div class="vazio">Nenhum vídeo adicionado.</div>'; return; }
+  box.innerHTML = clipList.map((c, i) => `<div class="item"><input type="checkbox" data-seq="${esc(c.id)}" ${seqSel.has(c.id) ? 'checked' : ''} title="Incluir na sequência" /><b style="color:var(--tx2)">${i + 1}</b><span>${esc(c.name)}</span>
+      <button class="btn ghost sm" data-up="${esc(c.id)}" ${i === 0 ? 'disabled' : ''} aria-label="Subir">↑</button><button class="btn ghost sm" data-down="${esc(c.id)}" ${i === clipList.length - 1 ? 'disabled' : ''} aria-label="Descer">↓</button>
+      <button class="btn ghost sm" data-play="${esc(c.id)}" ${liveOn ? '' : 'disabled'}>Tocar</button><button class="btn ghost sm" data-del="${esc(c.id)}">Remover</button></div>`).join('');
+  box.querySelectorAll('[data-seq]').forEach(c => c.onchange = () => { c.checked ? seqSel.add(c.dataset.seq) : seqSel.delete(c.dataset.seq); api().set_config({ seq: [...seqSel] }); });
+  box.querySelectorAll('[data-play]').forEach(b => b.onclick = () => run(() => api().clip_play(b.dataset.play)));
+  box.querySelectorAll('[data-up]').forEach(b => b.onclick = async () => { const r = await api().clip_move(b.dataset.up, -1); renderClips(r.cfg.clips); });
+  box.querySelectorAll('[data-down]').forEach(b => b.onclick = async () => { const r = await api().clip_move(b.dataset.down, 1); renderClips(r.cfg.clips); });
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { const r = await api().clip_remove(b.dataset.del); seqSel.delete(b.dataset.del); renderClips(r.cfg.clips); });
+}
+$('btnClipAdd').onclick = async () => { const r = await api().clip_add(); if (r.cfg) { r.cfg.clips.forEach(c => { if (!clipList.find(x => x.id === c.id)) seqSel.add(c.id); }); api().set_config({ seq: [...seqSel] }); renderClips(r.cfg.clips); } };
+$('btnSeq').onclick = () => run(() => api().clip_seq(clipList.filter(c => seqSel.has(c.id)).map(c => c.id)));
+$('btnClipStop').onclick = () => api().clip_stop();
+
+/* ---------- timer ---------- */
+const hms = (s) => [Math.floor(s / 3600), Math.floor(s % 3600 / 60), s % 60].map(n => String(n).padStart(2, '0')).join(':');
+document.querySelectorAll('[data-min]').forEach(b => b.onclick = () => { $('tMin').value = b.dataset.min; });
+$('tStart').onclick = () => run(() => api().timer_start(Number($('tMin').value)));
+$('tPause').onclick = () => run(() => (tState === 'paused' ? api().timer_resume() : api().timer_pause()));
+$('tCancel').onclick = () => run(() => api().timer_cancel());
+
+/* ---------- proteção e comentários ---------- */
+const sendGuard = () => run(() => api().guard_set($('gOn').checked, $('gAction').value, Number($('gSec').value) || 10));
+['gOn', 'gAction', 'gSec'].forEach(id => $(id).addEventListener('change', sendGuard));
+$('btnFalso').onclick = () => run(() => api().guard_cancel());
+$('btnUnpin').onclick = () => run(() => api().live_unpin());
+const msgsList = () => $('cMsgs').value.split('\n').map(s => s.trim()).filter(Boolean);
+const sendChat = () => run(() => api().chat_set($('cOn').checked, msgsList(), Number($('cMin').value) || 45, Number($('cMax').value) || 90, $('cRnd').checked));
+['cOn', 'cMsgs', 'cMin', 'cMax', 'cRnd'].forEach(id => $(id).addEventListener('change', sendChat));
+
+/* ---------- busca de chave (avançado) ---------- */
+$('btnRec').onclick = () => run(() => api().discover_start());
+$('btnStopRec').onclick = () => api().discover_stop();
+
+/* ---------- ciclo de atualização ---------- */
+async function tick() {
+  if (!api()) return;
+  let p; try { p = await api().poll(since); } catch (e) { return; }
+  p.log.forEach(l => { addLog(l); since = l.i + 1; });
+  busy = p.busy; liveOn = busy === 'prepare'; lastLive = p.live;
+  const a = p.account || {};
+  $('acctPill').className = 'pill ' + (a.connected ? 'on' : 'warn'); $('acctTxt').textContent = a.connected ? 'conta conectada' : 'conta não conectada';
+  $('acctInfo').textContent = a.connected ? `Conectada (confirmada em ${a.at || ''}). Você só entra de novo se a sessão cair.` : 'Entre na conta numa janela do navegador. O Loopfy não vê nem guarda a sua senha.';
+  $('btnLogin').textContent = a.connected ? 'Trocar de conta' : 'Entrar na conta';
+  document.querySelectorAll('.op,#btnImport,#btnPrep').forEach(b => { if (b.id === 'btnImport') b.disabled = !!busy && !liveOn; else b.disabled = !!busy || b.dataset.lic === '0'; });
+  $('btnLive').disabled = (!!busy && !liveOn) || $('btnLive').dataset.lic === '0';
+  $('btnLive').textContent = liveOn ? 'Encerrar sessão' : 'Iniciar LIVE'; $('btnLive').className = 'btn-live' + (liveOn ? ' stop' : '');
+  $('btnClipStop').disabled = !liveOn; $('btnSeq').disabled = !liveOn; $('btnStopRec').disabled = busy !== 'discover';
+  const sq = (p.mixer || {}).seq || {}; $('seqInfo').textContent = (p.mixer || {}).status === 'playing' && sq.total > 1 ? `Sequência: vídeo ${sq.index} de ${sq.total}` : '';
+  $('btnImport').textContent = liveOn ? 'Atualizar sacolinha' : 'Importar sacolinha';
+  if (lastBusy === 'products' && busy !== 'products') loadProds();
+  lastBusy = busy;
+
+  const L = p.live, M = p.mixer || {};
+  muted = !!M.mute; $('btnMute').classList.toggle('on', muted); $('btnMute2').textContent = muted ? 'Ativar microfone' : 'Silenciar microfone';
+  document.querySelectorAll('[data-play]').forEach(b => b.disabled = !liveOn);
+  if (p.frame) { $('retorno').src = p.frame; $('retorno').hidden = false; $('canvasMsg').hidden = true; }
+  else { $('retorno').hidden = true; $('canvasMsg').hidden = false; $('canvasMsg').innerHTML = liveOn ? 'Aguardando a LIVE pedir a câmera… Coloque um item na sacola e a tela de fontes aparece.' : 'Clique em <b>Iniciar LIVE</b>: o Loopfy abre o navegador, seleciona as fontes e inicia a transmissão.'; }
+  $('selo').hidden = !(liveOn && L.room);
+  const playing = M.status === 'playing'; $('seloClip').hidden = !playing; $('seloClip').textContent = playing ? '▶ ' + (M.clip || 'vídeo') : '';
+  $('cenaTxt').textContent = playing ? 'Vídeo da marca (' + (M.clip || '') + ')' : 'Câmera ao vivo';
+  $('btnUnpin').disabled = !(liveOn && L.pinned); $('btnUnpin').style.display = L.pinned ? 'inline-block' : 'none';
+  $('kSala').textContent = L.room || '—'; $('kPin').textContent = L.pinned ? L.pinned.title.slice(0, 28) : '—';
+  $('kClip').textContent = playing ? (M.clip || 'tocando') : '—'; $('kAuto').textContent = L.auto.on ? `a cada ${L.auto.sec}s (${L.auto.mode === 'ordem' ? 'em ordem' : 'aleatório'})` : 'Desligada';
+  $('kTimer').textContent = L.timer.state === 'idle' ? '--:--:--' : hms(L.timer.left);
+  tState = L.timer.state; $('tLeft').textContent = $('kTimer').textContent; $('tState').textContent = { idle: 'Sem timer.', running: 'Timer rodando.', paused: 'Timer pausado.' }[tState]; $('tPause').textContent = tState === 'paused' ? 'Retomar' : 'Pausar';
+  $('status').textContent = liveOn ? `Sessão ativa · sala ${L.room || '—'} · câmera: ${M.cam || '—'} · microfone: ${M.mic || '—'}${muted ? ' (mudo)' : ''}` : (busy ? 'Trabalhando…' : 'Sessão parada.');
+  ['tStart', 'tPause', 'tCancel'].forEach(id => $(id).disabled = !liveOn);
+  $('tGuard').textContent = L.guard.on ? (L.guard.action === 'end' ? 'encerra a LIVE' : 'pausa tudo') : 'desligada'; $('tChat').textContent = L.chat.on ? `${L.chat.n} mensagens` : 'desligados';
+  $('alertaGuard').style.display = L.guard.alert ? 'block' : 'none';
+  if (L.guard.alert) $('alertaTxt').textContent = `${L.guard.action === 'end' ? 'Encerrando a LIVE' : 'Pausando as automações'} em ${L.guard.left} s.`;
+  const ak = JSON.stringify(L.auto); if (ak !== tick.ak) { tick.ak = ak; if (document.activeElement !== $('aSec')) { $('aOn').checked = !!L.auto.on; $('aSec').value = L.auto.sec; $('aMode').value = L.auto.mode; } }
+  const key = JSON.stringify([L.products.map(x => x.id), L.pinned && L.pinned.id]); if (key !== tick.key) { tick.key = key; renderSac(); }
+  const c = $('cands'); const f = p.found || []; $('recStat').textContent = p.n ? `${p.n} respostas analisadas` : '';
+  if (f.length) { c.innerHTML = f.map(x => `<div class="item"><span><b>${esc(x.tag)}</b><br>${esc(x.masked)}</span><button class="btn ghost sm" data-tag="${esc(x.tag)}">Copiar</button></div>`).join(''); c.querySelectorAll('button').forEach(b => b.onclick = () => api().copy_secret(b.dataset.tag)); }
+}
+
+window.addEventListener('pywebviewready', async () => {
+  await refreshLicense();
+  const cfg = await api().get_config();
+  $('cfgVideo').value = cfg.video || ''; $('cfgAudio').value = cfg.audio || ''; $('cfgCamera').value = cfg.camera || ''; $('cfgMic').value = cfg.mic || '';
+  $('cfgDuck').value = cfg.duck ?? 25; $('duckV').textContent = $('cfgDuck').value; $('cfgClipVol').value = cfg.clipVol ?? 100; $('clipV').textContent = $('cfgClipVol').value;
+  const g = cfg.guard || {}; $('gOn').checked = !!g.on; $('gAction').value = g.action || 'end'; $('gSec').value = g.sec || 10;
+  const ch = cfg.chat || {}; $('cMsgs').value = (ch.msgs || []).join('\n'); $('cMin').value = ch.min || 45; $('cMax').value = ch.max || 90; $('cRnd').checked = ch.random !== false;
+  seqSel = new Set((cfg.seq && cfg.seq.length) ? cfg.seq : (cfg.clips || []).map(c => c.id)); renderClips(cfg.clips || []); loadProds();
+  setInterval(tick, 800); setInterval(refreshLicense, 60000);
+});
+</script>
+</body>
+</html>
