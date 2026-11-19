@@ -2,6 +2,8 @@
 setlocal
 set "RAIZ=%~dp0"
 set "LOOPFY_DEV=1"
+rem VERSAO DE TESTES: sem trava de licenca (remova esta linha para voltar a exigir chave)
+set "LOOPFY_SEM_LICENCA=1"
 set "LOOPFY_SERVER=http://localhost:3100"
 
 rem sobe o servidor de licenca (modo teste) se ainda nao estiver no ar, escondido

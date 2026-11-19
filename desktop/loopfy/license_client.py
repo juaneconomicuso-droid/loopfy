@@ -186,8 +186,16 @@ def activate(key: str) -> dict:
     return r
 
 
+def _test_mode() -> bool:
+    """VERSÃO DE TESTES: sem trava de licença. Só vale com as DUAS variáveis ligadas (LOOPFY_DEV=1 e LOOPFY_SEM_LICENCA=1).
+    Nas distribuições de venda essas variáveis não existem e a trava de assinatura continua valendo."""
+    return os.environ.get("LOOPFY_DEV") == "1" and os.environ.get("LOOPFY_SEM_LICENCA") == "1"
+
+
 def authorize() -> dict | None:
     """Devolve o payload do token válido ou None. Renova em silêncio quando falta pouco para vencer."""
+    if _test_mode():
+        return {"plan": "teste (sem trava)", "exp": time.time() + 12 * 3600}
     st = _load()
     p = verify_token(st["token"], st) if st.get("token") else None
     if p and p["exp"] - time.time() >= RENEW_BEFORE_S:
